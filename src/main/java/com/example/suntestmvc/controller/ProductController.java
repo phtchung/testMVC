@@ -3,65 +3,76 @@ package com.example.suntestmvc.controller;
 import com.example.suntestmvc.model.Product;
 import com.example.suntestmvc.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 
-@RestController
-@RequestMapping("/products")
+@Controller
+
 public class ProductController {
-    private ProductService productService;
+    private final ProductService productService;
 
     @Autowired
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
 
-    @GetMapping("/")
+
+    @GetMapping(value="/products/list")
     public String listProducts(Model model) {
         List<Product> products = productService.getAllProducts();
         model.addAttribute("products", products);
         return "list";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/products/{id}")
     public String viewProduct(@PathVariable Long id, Model model) {
         Product product = productService.getProductById(id).orElse(null);
         model.addAttribute("product", product);
         return "view";
     }
 
-    @GetMapping("/new")
+    @GetMapping("/products/new")
     public String createProductForm(Model model) {
         model.addAttribute("product", new Product());
         return "create";
     }
 
-    @PostMapping("/new")
-    public String createProduct(@ModelAttribute("product") Product product) {
+    @PostMapping("/products/new")
+    public String createProduct(@Valid @ModelAttribute("product") Product product,
+                                BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return "create";
+        }
         productService.addProduct(product);
-        return "redirect:/products";
+        return "redirect:/products/list";
     }
 
-    @GetMapping("/{id}/edit")
+    @GetMapping("/products/{id}/edit")
     public String editProductForm(@PathVariable Long id, Model model) {
         Product product = productService.getProductById(id).orElse(null);
         model.addAttribute("product", product);
         return "edit";
     }
 
-    @PostMapping("/{id}/edit")
-    public String editProduct(@PathVariable Long id, @ModelAttribute("product") Product product) {
+    @PostMapping("/products/{id}/edit")
+    public String editProduct(@PathVariable Long id,@Valid @ModelAttribute("product") Product product, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return "edit";
+        }
         productService.updateProduct(id, product);
-        return "redirect:/products";
+        return "redirect:/products/list";
     }
 
-    @GetMapping("/{id}/delete")
+    @GetMapping("/products/{id}/delete")
     public String deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return "redirect:/products";
+        return "redirect:/products/list";
     }
 
 //    @GetMapping("/clubs")
